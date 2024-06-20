@@ -51,13 +51,13 @@ public:
         return (fabs(e[0]) < s) && (fabs(e[1]) < s) && (fabs(e[2]) < s);
     }
 
-    /*static vec3 random() {
-        return vec3(random_double(), random_double(), random_double());
-    }*/
+    //static vec3 random() {
+    //    return vec3(random_double(), random_double(), random_double());
+    //}
 
-    /*static vec3 random(double min, double max) {
-        return vec3(random_double(min, max), random_double(min, max), random_double(min, max));
-    }*/
+    //static vec3 random(double min, double max) {
+    //    return vec3(random_double(min, max), random_double(min, max), random_double(min, max));
+    //}
 };
 
 // point3 is just an alias for vec3, but useful for geometric clarity in the code.
@@ -122,6 +122,4 @@ inline vec3 refract(const vec3& uv, const vec3& n, float etai_over_etat) {
     vec3 r_out_parallel = -sqrt(fabs(1.0 - r_out_perp.length_squared())) * n;
     return r_out_perp + r_out_parallel;
 }
-
-
 

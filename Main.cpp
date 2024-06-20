@@ -18,6 +18,15 @@ std::vector<objeto*> objetos;
 std::vector<luz*> luces;
 float intensityAmbient;
 
+point3 cameraPosition;
+vec3 cameraLookAt;
+vec3 cameraUp;
+
+vec3 pixelDelta_u;
+vec3 pixelDelta_v;
+
+vec3 upperLeftPixel;
+
 hitRecord* closestIntersection(const rayo& ray) {  
     constexpr float object_dist = std::numeric_limits<float>::max();
     
@@ -110,24 +119,31 @@ color sombra_RR(const hitRecord* hitRec, const rayo& ray, int depth) {
     for (luz* luz : luces) {
         rayo rayo_s(hitRec->position, luz->getPosition() - hitRec->position, ray.getMedium());
         double newIntensity = luz->getIntensity();
+        color colorNextHit = vec3(0, 0, 0);
 
         if (dot(hitRec->normal, rayo_s.getDirection()) > 0) {
+            bool completeShade = false;
             bool inShade = false;
             for (objeto* obj : objetos) {
                 hitRecord* nextHit = obj->intersects(rayo_s);
 
                 if (nextHit != nullptr && nextHit->distanceFromOrigin < (luz->getPosition() - nextHit->position).length()) {
+                    
                     if (nextHit->object != hitRec->object && nextHit->object->indice_transparencia == 1.0) {
-                        inShade = true;
+                        completeShade = true;
                         break;
+                    }
+                    else if (nextHit->object != hitRec->object && nextHit->object->indice_transparencia > 0.0) {
+                        inShade = true;
+                        colorNextHit = nextHit->object->ambiente;
+                        newIntensity *= 1 - nextHit->object->indice_transparencia;
                     }
                     else {
                         newIntensity *= 1 - nextHit->object->indice_transparencia;
                     }
                 }
             }
-
-            if (!inShade) {
+            if (!inShade && !completeShade) {
                 double angle = std::asin(dot(hitRec->normal, rayo_s.getDirection()));
                 if (angle > 0) {
                     diffuse += angle * newIntensity * hitRec->object->difuso;
@@ -136,12 +152,22 @@ color sombra_RR(const hitRecord* hitRec, const rayo& ray, int depth) {
                     specular += hitRec->object->indice_reflexion * std::pow(std::max(0.0, dot(reflected_light, (-hitRec->hitDir))), hitRec->object->indice_especular) * newIntensity * 0.3 * vec3(1, 1, 1);
                 }
             }
+            if (inShade && !completeShade) {
+                double angle = std::asin(dot(hitRec->normal, rayo_s.getDirection()));
+                if (angle > 0) {
+                    diffuse += angle * newIntensity * hitRec->object->difuso * colorNextHit;
+
+                    vec3 reflected_light = unit_vector(reflect(rayo_s.getDirection(), hitRec->normal));
+                    specular += hitRec->object->indice_reflexion * std::pow(std::max(0.0, dot(reflected_light, (-hitRec->hitDir))), hitRec->object->indice_especular) * newIntensity * 0.3 * vec3(1, 1, 1);
+                }
+            }
         }
     }
 
-    color final = color(0, 0, 0);
-
-    if (depth < 5 && hitRec->object->indice_transparencia < 1 && (hitRec->object->indice_reflexion > 0 || hitRec->object->indice_refraccion > 0)) {
+    color final = vec3(0, 0, 0);
+    
+    //&& hitRec->object->indice_transparencia < 1
+    if (depth < 5 && (hitRec->object->indice_reflexion > 0 || hitRec->object->indice_refraccion > 0)) {
         double kr = fresnel(ray.getDirection(), hitRec->normal, ray.getMedium(), hitRec->object->indice_refraccion);
 
         color colorReflexion = vec3(0, 0, 0);
@@ -157,7 +183,7 @@ color sombra_RR(const hitRecord* hitRec, const rayo& ray, int depth) {
                 colorRefraccion = traza_RR(refractionRay, depth + 1);
             }
         }
-
+        //*(1 - hitRec->object->indice_transparencia)
         final = (colorReflexion * kr + colorRefraccion * (1 - kr)) * (1 - hitRec->object->indice_transparencia);
     }
 
@@ -184,16 +210,49 @@ double degreesToRadians(double degrees) {
     return degrees * (M_PI / 180.0);
 }
 
+double clamp(double x, double min, double max) {
+    if (x < min) return min;
+    if (x > max) return max;
+    return x;
+}
+
+inline double random_double() {
+    // Returns a random real in [0,1).
+    return rand() / (RAND_MAX + 1.0);
+}
+
+vec3 sample_square() {
+    // Returns the vector to a random point in the [-.5,-.5]-[+.5,+.5] unit square.
+    return vec3(random_double() - 0.5, random_double() - 0.5, 0);
+}
+
+rayo get_ray(int i, int j) {
+    // Construct a camera ray originating from the origin and directed at randomly sampled
+    // point around the pixel location i, j.
+
+    vec3 offset = sample_square();
+    auto pixel_sample = upperLeftPixel + ((i + offset.x()) * pixelDelta_u) + ((j + offset.y()) * pixelDelta_v);
+
+    vec3 ray_origin = cameraPosition;
+    vec3 ray_direction = pixel_sample - ray_origin;
+
+    return rayo(ray_origin, ray_direction, 1.0);
+}
+
+
 void render() {
     float aspect = 5.0 / 5.0;
 
-    const int width = 1600;
+    const int width = 200;
     const int height = int(width / aspect);
     double fov = 60;
 
-    point3 cameraPosition = point3(0, 4.5, 6);
-    point3 cameraLookAt = point3(0, 4.5, -4.5);
-    vec3 cameraUp = vec3(0, 1, 0);
+    //Antialiasing
+    //int samplesPerPixel = 20;
+
+    cameraPosition = point3(0, 4.5, 6);
+    cameraLookAt = point3(0, 4.5, -4.5);
+    cameraUp = vec3(0, 1, 0);
 
     vec3 w = unit_vector(cameraPosition - cameraLookAt);
     vec3 u = unit_vector(cross(cameraUp, w));
@@ -205,36 +264,66 @@ void render() {
     double windowHeight = 2 * h * windowDistance;
     double windowWidth = windowHeight * (double(width) / height);
 
-
     // Calculate the vectors across the horizontal and down the vertical window edges.
     vec3 window_u = windowWidth * u;
     vec3 window_v = windowHeight * -v;
 
     // Calculate the horizontal and vertical delta vectors from pixel to pixel.
-    vec3 pixelDelta_u = window_u / width;
-    vec3 pixelDelta_v = window_v / height;
+    pixelDelta_u = window_u / width;
+    pixelDelta_v = window_v / height;
 
     // Calculate the location of the upper left pixel.
     vec3 windowUpperLeft = cameraPosition - (windowDistance * w) - window_u / 2 - window_v / 2;
-    vec3 upperLeftPixel = windowUpperLeft + 0.5 * (pixelDelta_u + pixelDelta_v);
+    upperLeftPixel = windowUpperLeft + 0.25 * (pixelDelta_u + pixelDelta_v);
 
     std::cout << "P3\n" << width << ' ' << height << "\n255\n";
 
     for (int i = 0; i < height; i++) {
         for (int j = 0; j < width; j++) {
+
+            color pixel(0.0, 0.0, 0.0);
+
+            //for (int sample = 0; sample < samplesPerPixel; sample++) {
+            //    rayo r = get_ray(j, i);
+            //    pixel += traza_RR(r, 1);
+                //cout << sample << '\n';
+                //cout << pixel.x() << ' ' << pixel.y() << ' ' << pixel.z() << '\n';
+                //cout << '\n';
+            //}
+
             vec3 pixelCenter = upperLeftPixel + (j * pixelDelta_u) + (i * pixelDelta_v);
             vec3 rayDirection = pixelCenter - cameraPosition;
             rayo ray(cameraPosition, rayDirection, 1.0);
 
-            color pixel = traza_RR(ray, 1);
+            pixel += traza_RR(ray, 1);
 
-            auto r = pixel.x();
-            auto g = pixel.y();
-            auto b = pixel.z();
+            pixelCenter = upperLeftPixel + (j * pixelDelta_u) + ((i + 0.5) * pixelDelta_v);
+            rayDirection = pixelCenter - cameraPosition;
+            rayo ray2(cameraPosition, rayDirection, 1.0);
 
-            int rbyte = int(255.999 * r);
-            int gbyte = int(255.999 * g);
-            int bbyte = int(255.999 * b);
+            pixel += traza_RR(ray2, 1);
+
+            pixelCenter = upperLeftPixel + ((j + 0.5) * pixelDelta_u) + (i * pixelDelta_v);
+            rayDirection = pixelCenter - cameraPosition;
+            rayo ray3(cameraPosition, rayDirection, 1.0);
+
+            pixel += traza_RR(ray3, 1);
+
+            pixelCenter = upperLeftPixel + ((j + 0.5) * pixelDelta_u) + ((i + 0.5) * pixelDelta_v);
+            rayDirection = pixelCenter - cameraPosition;
+            rayo ray4(cameraPosition, rayDirection, 1.0);
+
+            pixel += traza_RR(ray4, 1);
+
+            color result = pixel / 4;
+
+            double r = result.x();
+            double g = result.y();
+            double b = result.z();
+
+            int rbyte = int(256 * clamp(r, 0.0, 0.999));
+            int gbyte = int(256 * clamp(g, 0.0, 0.999));
+            int bbyte = int(256 * clamp(b, 0.0, 0.999));
 
             cout << rbyte << ' ' << gbyte << ' ' << bbyte << '\n';
         }
@@ -302,9 +391,11 @@ malla* getMalla(vec3 position, double length, double height, double prof) {
 }
 
 int main() {   
-    objetos.push_back(new esfera(vec3(-1.5, 3.5, -4.5), 1.5, color(1.0, 0.0, 0.0), color(1.0, 0.0, 0.0), color(1.0, 0.0, 0.0), 0.0, 1.5, 0.0, 0.2)); //Esfera de vidrio rosada
-    objetos.push_back(new esfera(vec3(2, 3, -4.5), 1, color(1.0, 1.0, 1.0), color(1.0, 1.0, 1.0), color(1.0, 1.0, 1.0), 1.0, 0.0, 0.5, 0.0));  //Esfera espejo
+    objetos.push_back(new esfera(vec3(-1.5, 3.6, -4.5), 1.5, color(1.0, 0.3, 0.3), color(1.0, 0.3, 0.3), color(1.0, 0.3, 0.3), 0.0, 1.5, 0.0, 0.2)); //Esfera de vidrio rosada
+    //objetos.push_back(new esfera(vec3(2, 3, -4.5), 1, color(1.0, 1.0, 1.0), color(1.0, 1.0, 1.0), color(1.0, 1.0, 1.0), 1.0, 0.0, 0.5, 1.0));  //Esfera espejo
     objetos.push_back(getMalla(vec3(-3, 0, -3), 6, 2, 4)); //Mesa
+    objetos.push_back(new esfera(vec3(2, 3, -4.5), 1, color(0.6, 0.6, 0.6), color(0.6, 0.6, 0.6), color(0.6, 0.6, 0.6), 0.8, 0.0, 1.0, 1.0)); //Esfera espejo
+
     /*
     //objetos.push_back(new esfera(vec3(0, 4.5, -4.5), 1.5, color(0.0, 0.0, 1.0), color(0.0, 0.0, 1.0), color(0.0, 0.0, 1.0), 0.8, 0.0, 0.3, 1.0));  //Esfera solida azul
     
@@ -330,18 +421,19 @@ int main() {
     objetos.push_back(new plano(vec3(0, 1, 0), point3(0, 0, -4.5), vec3(0, 0, -1), 9, 9, color(1.0, 1.0, 1.0), color(1.0, 1.0, 1.0), color(1.0, 1.0, 1.0), 1.0, 0.0, 0.0, 1.0));
     //Up face
     objetos.push_back(new plano(vec3(0, -1, 0), point3(0, 9, -4.5), vec3(0, 0, -1), 9, 9, color(0.2, 0.2, 0.2), color(0.2, 0.2, 0.2), color(0.2, 0.2, 0.2), 1.0, 0.0, 0.0, 1.0));
+    
     //Back face
-    objetos.push_back(new plano(vec3(0, 0, 1), point3(0, 4.5, -9), vec3(0, 0, -1), 9, 9, color(1.0, 1.0, 1.0), color(1.0, 1.0, 1.0), color(1.0, 1.0, 1.0), 1.0, 0.0, 0.0, 1.0));
+    objetos.push_back(new plano(vec3(0, 0, 1), point3(0, 4.5, -9), vec3(0, 0, 1), 9, 9, color(1.0, 1.0, 1.0), color(1.0, 1.0, 1.0), color(1.0, 1.0, 1.0), 1.0, 0.0, 0.0, 1.0));
     //Right face
     objetos.push_back(new plano(vec3(-1, 0, 0), point3(4.5, 4.5, -4.5), vec3(0, 0, 1), 9, 9, color(0.0, 0.4, 0.0), color(0.0, 0.4, 0.0), color(0.0, 0.4, 0.0), 1.0, 0.0, 0.0, 1.0));
     //Left face
     objetos.push_back(new plano(vec3(1, 0, 0), point3(-4.5, 4.5, -4.5), vec3(0, 0, 1), 9, 9, color(0.7, 0.0, 0.0), color(0.7, 0.0, 0.0), color(0.7, 0.0, 0.0), 1.0, 0.0, 0.0, 1.0));
 
+    luces.push_back(new luz(vec3(0, 8.999, -4.5), 0.3));
+    //luces.push_back(new luz(vec3(0, 8.9, -2.5), 0.3));
+    //luces.push_back(new luz(vec3(0, 8.9, -6.5), 0.3));
 
-    luces.push_back(new luz(vec3(0, 8.9, -2.5), 0.3));
-    luces.push_back(new luz(vec3(0, 8.9, -6.5), 0.3));
-
-    intensityAmbient = 0.3;
+    intensityAmbient = 0.5;
 
     render();
 }

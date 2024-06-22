@@ -16,6 +16,6 @@ private:
 	bool intersectsSide(const vec3& rayOrigin, const vec3& rayDirection, float& t) const;
 	vec3 getNormalHitPoint(vec3 hitPoint);
 public:
-	cilindro(vec3 centro, double radio, double altura, vec3 direccion, color ambient, color especular, color difuso, double indice_reflexion, double indice_refraccion, double indice_especular, double indice_transparencia);
+	cilindro(vec3 centro, double radio, double altura, vec3 direccion, color colorNormalizado, double indice_reflexion, double indice_refraccion, double indice_especular, double indice_transparencia);
 	hitRecord* intersects(const rayo& ray);
 };

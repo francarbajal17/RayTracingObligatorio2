@@ -70,6 +70,11 @@
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <IncludePath>.\libs\pugixml-1.14\pugixml-1.14\src</IncludePath>
+    <LibraryPath>.\libs\pugixml-1.14\pugixml-1.14\src;$(LibraryPath)</LibraryPath>
+    <SourcePath>.\libs\pugixml-1.14\pugixml-1.14\src;$(SourcePath)</SourcePath>
+  </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
@@ -104,6 +109,7 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
+      <AdditionalIncludeDirectories>%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -129,6 +135,7 @@
   <ItemGroup>
     <ClCompile Include="cilindro.cpp" />
     <ClCompile Include="esfera.cpp" />
+    <ClCompile Include="libs\pugixml-1.14\pugixml-1.14\src\pugixml.cpp" />
     <ClCompile Include="luz.cpp" />
     <ClCompile Include="Main.cpp" />
     <ClCompile Include="malla.cpp" />
@@ -140,6 +147,8 @@
   <ItemGroup>
     <ClInclude Include="cilindro.h" />
     <ClInclude Include="esfera.h" />
+    <ClInclude Include="libs\pugixml-1.14\pugixml-1.14\src\pugiconfig.hpp" />
+    <ClInclude Include="libs\pugixml-1.14\pugixml-1.14\src\pugixml.hpp" />
     <ClInclude Include="luz.h" />
     <ClInclude Include="malla.h" />
     <ClInclude Include="objeto.h" />

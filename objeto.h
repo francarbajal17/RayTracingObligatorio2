@@ -19,9 +19,7 @@ struct hitRecord {
 class objeto
 {
 public:
-	color ambiente;
-	color especular;
-	color difuso;
+	color colorNormalizado;
 
 	double indice_reflexion;
 	double indice_refraccion;

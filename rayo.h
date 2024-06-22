@@ -5,13 +5,14 @@
 class rayo
 {
 private:
-	point3 origin;
-	vec3 direction;
-	double medium;
+	point3 origen;
+	vec3 direccion;
+	double medio;
+
 public:
-	rayo(vec3 origin, vec3 direction, double medium);
-	vec3 getOrigin() const;
-	vec3 getDirection() const;
-	double getMedium() const;
+	rayo(vec3 origen, vec3 direccion, double medio);
+	vec3 obtenerOrigen() const;
+	vec3 obtenerDireccion() const;
+	double obtenerMedio() const;
 };
 

@@ -1,19 +1,19 @@
 #include "rayo.h"
 
-rayo::rayo(vec3 origin, vec3 direction, double medium) {
-	this->origin = origin;
-	this->direction = unit_vector(direction);
-	this->medium = medium;
+rayo::rayo(vec3 origen, vec3 direccion, double medio) {
+	this->origen = origen;
+	this->direccion = unit_vector(direccion);
+	this->medio = medio;
 }
 
-vec3 rayo::getOrigin() const {
-	return origin;
+vec3 rayo::obtenerOrigen() const {
+	return origen;
 }
 
-vec3 rayo::getDirection() const {
-	return direction;
+vec3 rayo::obtenerDireccion() const {
+	return direccion;
 }
 
-double rayo::getMedium() const {
-	return medium;
+double rayo::obtenerMedio() const {
+	return medio;
 }

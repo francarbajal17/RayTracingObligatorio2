@@ -5,6 +5,7 @@
 #include "plano.h"
 #include "triangulo.h"
 #include "malla.h"
+#include "cilindro.h"
 
 #include <vector>
 #include <iostream>
@@ -183,8 +184,8 @@ color sombra_RR(const hitRecord* hitRec, const rayo& ray, int depth) {
                 colorRefraccion = traza_RR(refractionRay, depth + 1);
             }
         }
-        //*(1 - hitRec->object->indice_transparencia)
-        final = (colorReflexion * kr + colorRefraccion * (1 - kr)) * (1 - hitRec->object->indice_transparencia);
+        
+        final = (colorReflexion * kr + colorRefraccion * (1 - kr));
     }
 
     final += (hitRec->object->ambiente * intensityAmbient + diffuse + specular) * hitRec->object->indice_transparencia;
@@ -216,39 +217,13 @@ double clamp(double x, double min, double max) {
     return x;
 }
 
-inline double random_double() {
-    // Returns a random real in [0,1).
-    return rand() / (RAND_MAX + 1.0);
-}
-
-vec3 sample_square() {
-    // Returns the vector to a random point in the [-.5,-.5]-[+.5,+.5] unit square.
-    return vec3(random_double() - 0.5, random_double() - 0.5, 0);
-}
-
-rayo get_ray(int i, int j) {
-    // Construct a camera ray originating from the origin and directed at randomly sampled
-    // point around the pixel location i, j.
-
-    vec3 offset = sample_square();
-    auto pixel_sample = upperLeftPixel + ((i + offset.x()) * pixelDelta_u) + ((j + offset.y()) * pixelDelta_v);
-
-    vec3 ray_origin = cameraPosition;
-    vec3 ray_direction = pixel_sample - ray_origin;
-
-    return rayo(ray_origin, ray_direction, 1.0);
-}
-
 
 void render() {
     float aspect = 5.0 / 5.0;
 
-    const int width = 200;
+    const int width = 500;
     const int height = int(width / aspect);
     double fov = 60;
-
-    //Antialiasing
-    //int samplesPerPixel = 20;
 
     cameraPosition = point3(0, 4.5, 6);
     cameraLookAt = point3(0, 4.5, -4.5);
@@ -391,11 +366,11 @@ malla* getMalla(vec3 position, double length, double height, double prof) {
 }
 
 int main() {   
-    objetos.push_back(new esfera(vec3(-1.5, 3.6, -4.5), 1.5, color(1.0, 0.3, 0.3), color(1.0, 0.3, 0.3), color(1.0, 0.3, 0.3), 0.0, 1.5, 0.0, 0.2)); //Esfera de vidrio rosada
+    objetos.push_back(new esfera(vec3(-1.5, 3.3, -4.5), 1.3, color(1.0, 0.3, 0.3), color(1.0, 0.3, 0.3), color(1.0, 0.3, 0.3), 0.0, 1.5, 0.0, 0.2)); //Esfera de vidrio rosada
     //objetos.push_back(new esfera(vec3(2, 3, -4.5), 1, color(1.0, 1.0, 1.0), color(1.0, 1.0, 1.0), color(1.0, 1.0, 1.0), 1.0, 0.0, 0.5, 1.0));  //Esfera espejo
     objetos.push_back(getMalla(vec3(-3, 0, -3), 6, 2, 4)); //Mesa
-    objetos.push_back(new esfera(vec3(2, 3, -4.5), 1, color(0.6, 0.6, 0.6), color(0.6, 0.6, 0.6), color(0.6, 0.6, 0.6), 0.8, 0.0, 1.0, 1.0)); //Esfera espejo
-
+    objetos.push_back(new esfera(vec3(2, 2.7, -4.7), 0.7, color(0.3, 0.3, 0.3), color(0.3, 0.3, 0.3), color(0.3, 0.3, 0.3), 1.0, 0.0, 1.0, 1.0)); //Esfera espejo
+    objetos.push_back(new cilindro(vec3(-0.3, 2, -4.0), 0.6, 1.5, vec3(0, 1, 0), color(0.0, 0.6, 0.0), color(0.0, 0.6, 0.0), color(0.0, 0.6, 0.6), 0.0, 0.0, 0.0, 0.8)); //Cilindro
     /*
     //objetos.push_back(new esfera(vec3(0, 4.5, -4.5), 1.5, color(0.0, 0.0, 1.0), color(0.0, 0.0, 1.0), color(0.0, 0.0, 1.0), 0.8, 0.0, 0.3, 1.0));  //Esfera solida azul
     
@@ -418,16 +393,16 @@ int main() {
     //Square scene
 
     //Bottom face
-    objetos.push_back(new plano(vec3(0, 1, 0), point3(0, 0, -4.5), vec3(0, 0, -1), 9, 9, color(1.0, 1.0, 1.0), color(1.0, 1.0, 1.0), color(1.0, 1.0, 1.0), 1.0, 0.0, 0.0, 1.0));
+    objetos.push_back(new plano(vec3(0, 1, 0), point3(0, 0, -4.5), vec3(0, 0, -1), 9, 9, color(1.0, 1.0, 1.0), color(1.0, 1.0, 1.0), color(1.0, 1.0, 1.0), 0.0, 0.0, 0.0, 1.0));
     //Up face
-    objetos.push_back(new plano(vec3(0, -1, 0), point3(0, 9, -4.5), vec3(0, 0, -1), 9, 9, color(0.2, 0.2, 0.2), color(0.2, 0.2, 0.2), color(0.2, 0.2, 0.2), 1.0, 0.0, 0.0, 1.0));
+    objetos.push_back(new plano(vec3(0, -1, 0), point3(0, 9, -4.5), vec3(0, 0, -1), 9, 9, color(0.2, 0.2, 0.2), color(0.2, 0.2, 0.2), color(0.2, 0.2, 0.2), 0.0, 0.0, 0.0, 1.0));
     
     //Back face
-    objetos.push_back(new plano(vec3(0, 0, 1), point3(0, 4.5, -9), vec3(0, 0, 1), 9, 9, color(1.0, 1.0, 1.0), color(1.0, 1.0, 1.0), color(1.0, 1.0, 1.0), 1.0, 0.0, 0.0, 1.0));
+    objetos.push_back(new plano(vec3(0, 0, 1), point3(0, 4.5, -9), vec3(0, 0, 1), 9, 9, color(1.0, 1.0, 1.0), color(1.0, 1.0, 1.0), color(1.0, 1.0, 1.0), 0.0, 0.0, 0.0, 1.0));
     //Right face
-    objetos.push_back(new plano(vec3(-1, 0, 0), point3(4.5, 4.5, -4.5), vec3(0, 0, 1), 9, 9, color(0.0, 0.4, 0.0), color(0.0, 0.4, 0.0), color(0.0, 0.4, 0.0), 1.0, 0.0, 0.0, 1.0));
+    objetos.push_back(new plano(vec3(-1, 0, 0), point3(4.5, 4.5, -4.5), vec3(0, 0, 1), 9, 9, color(0.0, 0.4, 0.0), color(0.0, 0.4, 0.0), color(0.0, 0.4, 0.0), 0.0, 0.0, 0.0, 1.0));
     //Left face
-    objetos.push_back(new plano(vec3(1, 0, 0), point3(-4.5, 4.5, -4.5), vec3(0, 0, 1), 9, 9, color(0.7, 0.0, 0.0), color(0.7, 0.0, 0.0), color(0.7, 0.0, 0.0), 1.0, 0.0, 0.0, 1.0));
+    objetos.push_back(new plano(vec3(1, 0, 0), point3(-4.5, 4.5, -4.5), vec3(0, 0, 1), 9, 9, color(0.7, 0.0, 0.0), color(0.7, 0.0, 0.0), color(0.7, 0.0, 0.0), 0.0, 0.0, 0.0, 1.0));
 
     luces.push_back(new luz(vec3(0, 8.999, -4.5), 0.3));
     //luces.push_back(new luz(vec3(0, 8.9, -2.5), 0.3));

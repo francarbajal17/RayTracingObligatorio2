@@ -127,6 +127,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="cilindro.cpp" />
     <ClCompile Include="esfera.cpp" />
     <ClCompile Include="luz.cpp" />
     <ClCompile Include="Main.cpp" />
@@ -137,6 +138,7 @@
     <ClCompile Include="triangulo.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="cilindro.h" />
     <ClInclude Include="esfera.h" />
     <ClInclude Include="luz.h" />
     <ClInclude Include="malla.h" />

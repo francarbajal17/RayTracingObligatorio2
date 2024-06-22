@@ -39,6 +39,9 @@
     <ClCompile Include="malla.cpp">
       <Filter>Archivos de origen</Filter>
     </ClCompile>
+    <ClCompile Include="cilindro.cpp">
+      <Filter>Archivos de origen</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="vec3.h">
@@ -63,6 +66,9 @@
       <Filter>Archivos de encabezado</Filter>
     </ClInclude>
     <ClInclude Include="malla.h">
+      <Filter>Archivos de encabezado</Filter>
+    </ClInclude>
+    <ClInclude Include="cilindro.h">
       <Filter>Archivos de encabezado</Filter>
     </ClInclude>
   </ItemGroup>

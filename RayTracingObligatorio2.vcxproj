@@ -71,8 +71,8 @@
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
-    <IncludePath>.\libs\pugixml-1.14\pugixml-1.14\src</IncludePath>
-    <LibraryPath>.\libs\pugixml-1.14\pugixml-1.14\src;$(LibraryPath)</LibraryPath>
+    <IncludePath>.\libs\FreeImage;.\libs\pugixml-1.14\pugixml-1.14\src</IncludePath>
+    <LibraryPath>.\libs\FreeImage;.\libs\pugixml-1.14\pugixml-1.14\src;$(LibraryPath)</LibraryPath>
     <SourcePath>.\libs\pugixml-1.14\pugixml-1.14\src;$(SourcePath)</SourcePath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
@@ -114,7 +114,12 @@
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
+      <AdditionalDependencies>FreeImage.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
+    <PostBuildEvent>
+      <Command>xcopy /y /d ".\libs\FreeImage\FreeImage.dll" "$(OutDir)"</Command>
+    </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>

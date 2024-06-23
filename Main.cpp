@@ -7,6 +7,7 @@
 #include "malla.h"
 #include "cilindro.h"
 #include "pugixml.hpp"
+#include "FreeImage.h"
 
 #include <vector>
 #include <iostream>
@@ -86,6 +87,7 @@ double luz2Z;
 double luz2Intensidad;
 
 int width;
+int height;
 
 point3 cameraPosition;
 vec3 cameraLookAt;
@@ -330,12 +332,77 @@ double clamp(double x, double min, double max)
   return x;
 }
 
+
+void saveAndShowGeneratedImage(std::vector<color> imagenFinal) {
+    FIBITMAP* image = FreeImage_Allocate(width, height, 24);
+
+    if (!image) {
+        std::cerr << "Failed to allocate image" << std::endl;
+        FreeImage_DeInitialise();
+        throw new exception();
+    }
+
+    // Set the pixels
+    for (int i = 0; i < height; i++) {
+        for (int j = 0; j < width; j++) {
+            color& result = imagenFinal[i * width + j];
+
+            int rbyte = int(256 * clamp(result.x(), 0.0, 0.999));
+            int gbyte = int(256 * clamp(result.y(), 0.0, 0.999));
+            int bbyte = int(256 * clamp(result.z(), 0.0, 0.999));
+
+            RGBQUAD color;
+            color.rgbRed = rbyte;
+            color.rgbGreen = gbyte;
+            color.rgbBlue = bbyte;
+            FreeImage_SetPixelColor(image, j, height - i, &color);
+        }
+    }
+
+    std::time_t now = std::time(nullptr);
+    string timeString = std::to_string(now);
+    string fileName = "./results/image_" + timeString + ".png";
+    const char* imagePath = fileName.data();  // Replace with your image path
+
+    // Save the image
+    if (FreeImage_Save(FIF_PNG, image, imagePath, 0)) {
+        std::cout << "Image saved successfully!" << std::endl;
+    }
+    else {
+        std::cerr << "Failed to save image" << std::endl;
+    }
+
+    // Free resources
+    FreeImage_Unload(image);
+    FreeImage_DeInitialise();
+
+
+
+    // Command to open image file based on OS
+    #ifdef _WIN32
+        std::string command = "start " + std::string(imagePath);
+    #elif __APPLE__
+        std::string command = "open " + std::string(imagePath);
+    #else
+        std::string command = "xdg-open " + std::string(imagePath);
+    #endif
+
+    // Execute the command
+    int result = std::system(command.c_str());
+    if (result != 0) {
+        std::cerr << "Failed to open image file." << std::endl;
+        throw new exception();
+    }
+}
+
+
 void dibujarEscena()
 {
   float aspect = 5.0 / 5.0;
-  const int height = int(width / aspect);
+  height = int(width / aspect);
   double fov = 60;
 
+  std::vector<color> imagenFinal;
   cameraLookAt = point3(0, 4.5, -4.5);
   cameraUp = vec3(0, 1, 0);
 
@@ -361,8 +428,6 @@ void dibujarEscena()
   vec3 windowUpperLeft = cameraPosition - (windowDistance * w) - window_u / 2 - window_v / 2;
   upperLeftPixel = windowUpperLeft + 0.25 * (pixelDelta_u + pixelDelta_v);
 
-  std::cout << "P3\n"
-            << width << ' ' << height << "\n255\n";
 
   for (int i = 0; i < height; i++)
   {
@@ -397,17 +462,10 @@ void dibujarEscena()
 
       color result = pixel / 4;
 
-      double r = result.x();
-      double g = result.y();
-      double b = result.z();
-
-      int rbyte = int(256 * clamp(r, 0.0, 0.999));
-      int gbyte = int(256 * clamp(g, 0.0, 0.999));
-      int bbyte = int(256 * clamp(b, 0.0, 0.999));
-
-      cout << rbyte << ' ' << gbyte << ' ' << bbyte << '\n';
+      imagenFinal.push_back(result);
     }
   }
+  saveAndShowGeneratedImage(imagenFinal);
 }
 
 malla *getMalla(vec3 position, double length, double height, double prof, color color, double indice_reflexion, double indice_refraccion, double indice_especular, double indice_transparencia)

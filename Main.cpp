@@ -23,17 +23,43 @@ double intensityAmbient;
 bool mostrarRefraccionBYN = false;
 bool mostrarRefleccionBYN = false;
 
+//Esfera grande
 double esferaGrandeX;
 double esferaGrandeY;
 double esferaGrandeZ;
+double indiceTransparenciaEG;
+double indiceReflexionEG;
+double indiceEspecularEG;
+double indiceRefraccionEG;
+double radioEsferaGrande;
+double rColorEG;
+double gColorEG;
+double bColorEG;
 
 double esferaChicaX;
 double esferaChicaY;
 double esferaChicaZ;
+double rColorEC;
+double gColorEC;
+double bColorEC;
+double radioEsferaChica;
+double indiceTransparenciaEC;
+double indiceReflexionEC;
+double indiceEspecularEC;
+double indiceRefraccionEC;
 
 double cilindroX;
 double cilindroY;
 double cilindroZ;
+double altoCilindro;
+double radioCilindro;
+double rColorCilindro;
+double gColorCilindro;
+double bColorCilindro;
+double indiceTransparenciaCilindro;
+double indiceReflexionCilindro;
+double indiceEspecularCilindro;
+double indiceRefraccionCilindro;
 
 double luz1X;
 double luz1Y;
@@ -46,6 +72,13 @@ double mesaZ;
 double mesaAncho;
 double mesaAlto;
 double mesaProfundidad;
+double rColorMesa;
+double gColorMesa;
+double bColorMesa;
+double indiceTransparenciaMesa;
+double indiceReflexionMesa;
+double indiceEspecularMesa;
+double indiceRefraccionMesa;
 
 double luz2X;
 double luz2Y;
@@ -377,7 +410,7 @@ void dibujarEscena()
   }
 }
 
-malla *getMalla(vec3 position, double length, double height, double prof)
+malla *getMalla(vec3 position, double length, double height, double prof, color color, double indice_reflexion, double indice_refraccion, double indice_especular, double indice_transparencia)
 {
 
   std::vector<triangulo *> triangulos;
@@ -441,7 +474,7 @@ malla *getMalla(vec3 position, double length, double height, double prof)
       triangulos.push_back(new triangulo(vec3(position.x() + length, yMin, zMin), vec3(position.x() + length, yMax, zMax), vec3(position.x() + length, yMin, zMax)));
     }
   }
-  return new malla(triangulos, color(1.0, 1.0, 1.0), 0.0, 0.0, 0.0, 1.0);
+  return new malla(triangulos, color, indice_reflexion, indice_refraccion, indice_especular, indice_transparencia);
 }
 
 void cargarObjetosYLuces()
@@ -459,10 +492,17 @@ void cargarObjetosYLuces()
   // Cara izquierda
   objetos.push_back(new plano(vec3(1, 0, 0), point3(-4.5, 4.5, -4.5), vec3(0, 0, .7), 9, 9, color(0.7, 0.0, 0.0), 0.0, 0.0, 0.7, 1.0));
 
-  objetos.push_back(new esfera(vec3(esferaGrandeX, esferaGrandeY, esferaGrandeZ), 1.3, color(1.0, 0.3, 0.3), 0.0, 1.5, 0.0, 0.2));                      // Esfera de vidrio rosada
-  objetos.push_back(new esfera(vec3(esferaChicaX, esferaChicaY, esferaChicaZ), 0.7, color(0.3, 0.3, 0.3), 1.0, 0.0, 1.0, 1.0));                         // Esfera espejo
-  objetos.push_back(getMalla(vec3(mesaX, mesaY, mesaZ), mesaAncho, mesaAlto, mesaProfundidad));                             // Mesa
-  objetos.push_back(new cilindro(vec3(cilindroX, cilindroY, cilindroZ), 0.6, 1.5, vec3(0, 1, 0), color(0.0, 0.6, 0.6), 0.0, 0.0, 0.0, 0.8));  // Cilindro
+  objetos.push_back(new esfera(vec3(esferaGrandeX, esferaGrandeY, esferaGrandeZ), radioEsferaGrande, color(rColorEG, gColorEG, bColorEG),                                    // Esfera de vidrio rosada
+                                    indiceReflexionEG, indiceRefraccionEG, indiceTransparenciaEG, indiceEspecularEG));         
+
+  objetos.push_back(new esfera(vec3(esferaChicaX, esferaChicaY, esferaChicaZ), radioEsferaChica, color(rColorEC, gColorEC, bColorEC),                                       // Esfera espejo
+      indiceReflexionEC, indiceRefraccionEC, indiceTransparenciaEC, indiceEspecularEC));
+  
+  objetos.push_back(getMalla(vec3(mesaX, mesaY, mesaZ), mesaAncho, mesaAlto, mesaProfundidad, color(rColorMesa, gColorMesa, bColorMesa),                                    // Mesa
+                                indiceReflexionMesa, indiceRefraccionMesa, indiceEspecularMesa, indiceTransparenciaMesa));
+
+  objetos.push_back(new cilindro(vec3(cilindroX, cilindroY, cilindroZ), radioCilindro, altoCilindro, vec3(0, 1, 0), color(rColorCilindro, gColorCilindro, bColorCilindro),  // Cilindro
+                    indiceReflexionCilindro, indiceRefraccionCilindro, indiceEspecularCilindro, indiceTransparenciaCilindro));  
 
   luces.push_back(new luz(vec3(luz1X, luz1Y, luz1Z), luz1Intensidad));
   luces.push_back(new luz(vec3(luz2X, luz2Y, luz2Z), luz2Intensidad));
@@ -474,24 +514,57 @@ void cargarParametrosDesdeXML() {
 
     width = doc.child("scene").child("window").attribute("width").as_int();
 
-    esferaGrandeX = doc.child("scene").child("objects").child("esferaGrande").attribute("X").as_double();
-    esferaGrandeY = doc.child("scene").child("objects").child("esferaGrande").attribute("Y").as_double();
-    esferaGrandeZ = doc.child("scene").child("objects").child("esferaGrande").attribute("Z").as_double();
+    esferaGrandeX = doc.child("scene").child("objects").child("esferaGrande").child("posicion").attribute("X").as_double();
+    esferaGrandeY = doc.child("scene").child("objects").child("esferaGrande").child("posicion").attribute("Y").as_double();
+    esferaGrandeZ = doc.child("scene").child("objects").child("esferaGrande").child("posicion").attribute("Z").as_double();
+    radioEsferaGrande = doc.child("scene").child("objects").child("esferaGrande").child("dimensiones").attribute("radio").as_double();
+    rColorEG = doc.child("scene").child("objects").child("esferaGrande").child("color").attribute("r").as_double();
+    gColorEG = doc.child("scene").child("objects").child("esferaGrande").child("color").attribute("g").as_double();
+    bColorEG = doc.child("scene").child("objects").child("esferaGrande").child("color").attribute("b").as_double();
+    indiceTransparenciaEG = doc.child("scene").child("objects").child("esferaGrande").child("parametros").attribute("itransparencia").as_double();
+    indiceReflexionEG = doc.child("scene").child("objects").child("esferaGrande").child("parametros").attribute("ireflexion").as_double();
+    indiceEspecularEG = doc.child("scene").child("objects").child("esferaGrande").child("parametros").attribute("iespecular").as_double();
+    indiceRefraccionEG = doc.child("scene").child("objects").child("esferaGrande").child("parametros").attribute("irefraccion").as_double();
 
-    esferaChicaX = doc.child("scene").child("objects").child("esferaChica").attribute("X").as_double();
-    esferaChicaY = doc.child("scene").child("objects").child("esferaChica").attribute("Y").as_double();
-    esferaChicaZ = doc.child("scene").child("objects").child("esferaChica").attribute("Z").as_double();
 
-    cilindroX = doc.child("scene").child("objects").child("cilindro").attribute("X").as_double();
-    cilindroY = doc.child("scene").child("objects").child("cilindro").attribute("Y").as_double();
-    cilindroZ = doc.child("scene").child("objects").child("cilindro").attribute("Z").as_double();
+    esferaChicaX = doc.child("scene").child("objects").child("esferaChica").child("posicion").attribute("X").as_double();
+    esferaChicaY = doc.child("scene").child("objects").child("esferaChica").child("posicion").attribute("Y").as_double();
+    esferaChicaZ = doc.child("scene").child("objects").child("esferaChica").child("posicion").attribute("Z").as_double();
+    radioEsferaChica = doc.child("scene").child("objects").child("esferaChica").child("dimensiones").attribute("radio").as_double();
+    rColorEC = doc.child("scene").child("objects").child("esferaChica").child("color").attribute("r").as_double();
+    gColorEC = doc.child("scene").child("objects").child("esferaChica").child("color").attribute("g").as_double();
+    bColorEC = doc.child("scene").child("objects").child("esferaChica").child("color").attribute("b").as_double();
+    indiceTransparenciaEC = doc.child("scene").child("objects").child("esferaChica").child("parametros").attribute("itransparencia").as_double();
+    indiceReflexionEC = doc.child("scene").child("objects").child("esferaChica").child("parametros").attribute("ireflexion").as_double();
+    indiceEspecularEC = doc.child("scene").child("objects").child("esferaChica").child("parametros").attribute("iespecular").as_double();
+    indiceRefraccionEC = doc.child("scene").child("objects").child("esferaChica").child("parametros").attribute("irefraccion").as_double();
 
-    mesaX = doc.child("scene").child("objects").child("mesa").attribute("X").as_double();
-    mesaY = doc.child("scene").child("objects").child("mesa").attribute("Y").as_double();
-    mesaZ = doc.child("scene").child("objects").child("mesa").attribute("Z").as_double();
-    mesaAncho = doc.child("scene").child("objects").child("mesa").attribute("ancho").as_double();
-    mesaAlto = doc.child("scene").child("objects").child("mesa").attribute("alto").as_double();
-    mesaProfundidad = doc.child("scene").child("objects").child("mesa").attribute("profundidad").as_double();
+    cilindroX = doc.child("scene").child("objects").child("cilindro").child("posicion").attribute("X").as_double();
+    cilindroY = doc.child("scene").child("objects").child("cilindro").child("posicion").attribute("Y").as_double();
+    cilindroZ = doc.child("scene").child("objects").child("cilindro").child("posicion").attribute("Z").as_double();
+    altoCilindro = doc.child("scene").child("objects").child("cilindro").child("dimensiones").attribute("alto").as_double();
+    radioCilindro = doc.child("scene").child("objects").child("cilindro").child("dimensiones").attribute("radio").as_double();
+    rColorCilindro = doc.child("scene").child("objects").child("cilindro").child("color").attribute("r").as_double();
+    gColorCilindro = doc.child("scene").child("objects").child("cilindro").child("color").attribute("g").as_double();
+    bColorCilindro = doc.child("scene").child("objects").child("cilindro").child("color").attribute("b").as_double();
+    indiceTransparenciaCilindro = doc.child("scene").child("objects").child("cilindro").child("parametros").attribute("itransparencia").as_double();
+    indiceReflexionCilindro = doc.child("scene").child("objects").child("cilindro").child("parametros").attribute("ireflexion").as_double();
+    indiceEspecularCilindro = doc.child("scene").child("objects").child("cilindro").child("parametros").attribute("iespecular").as_double();
+    indiceRefraccionCilindro = doc.child("scene").child("objects").child("cilindro").child("parametros").attribute("irefraccion").as_double();
+
+    mesaX = doc.child("scene").child("objects").child("mesa").child("posicion").attribute("X").as_double();
+    mesaY = doc.child("scene").child("objects").child("mesa").child("posicion").attribute("Y").as_double();
+    mesaZ = doc.child("scene").child("objects").child("mesa").child("posicion").attribute("Z").as_double();
+    mesaAncho = doc.child("scene").child("objects").child("mesa").child("dimensiones").attribute("ancho").as_double();
+    mesaAlto = doc.child("scene").child("objects").child("mesa").child("dimensiones").attribute("alto").as_double();
+    mesaProfundidad = doc.child("scene").child("objects").child("mesa").child("dimensiones").attribute("profundidad").as_double();
+    rColorMesa = doc.child("scene").child("objects").child("mesa").child("color").attribute("r").as_double();
+    gColorMesa = doc.child("scene").child("objects").child("mesa").child("color").attribute("g").as_double();
+    bColorMesa = doc.child("scene").child("objects").child("mesa").child("color").attribute("b").as_double();
+    indiceTransparenciaMesa = doc.child("scene").child("objects").child("mesa").child("parametros").attribute("itransparencia").as_double();
+    indiceReflexionMesa = doc.child("scene").child("objects").child("mesa").child("parametros").attribute("ireflexion").as_double();
+    indiceEspecularMesa = doc.child("scene").child("objects").child("mesa").child("parametros").attribute("iespecular").as_double();
+    indiceRefraccionMesa = doc.child("scene").child("objects").child("mesa").child("parametros").attribute("irefraccion").as_double();
 
     intensityAmbient = doc.child("scene").child("lights").child("luzAmbiente").attribute("intensity").as_double();
     luz1X = doc.child("scene").child("lights").child("light1").attribute("X").as_double();

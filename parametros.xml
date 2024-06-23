@@ -1,12 +1,13 @@
 <?xml version="1.0"?>
 <scene>
-	<window width = "1000" />
+	<window width = "400" />
 	<camera X = "0.0" Y= "4.5" Z = "6.0" />
+	<configuracion mostrarReflexion="false" mostrarRefraccion="true" />
 	<objects>
 
     <!--ESFERA GRANDE -->
 		<esferaGrande>
-      <posicion X = "-1.5" Y = "3.3" Z = "-4.5"/>
+      <posicion X = "-1.5" Y = "3.31" Z = "-4.5"/>
       <dimensiones radio="1.3"/>
       <color r="1.0" g=".3" b=".3"/>
       <parametros irefraccion="1.5" itransparencia="0" ireflexion="0" iespecular=".2"/>

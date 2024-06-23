@@ -21,8 +21,8 @@ using color = vec3;
 std::vector<objeto *> objetos;
 std::vector<luz *> luces;
 double intensityAmbient;
-bool mostrarRefraccionBYN = false;
-bool mostrarRefleccionBYN = false;
+bool mostrarRefraccionBYN;
+bool mostrarRefleccionBYN;
 
 //Esfera grande
 double esferaGrandeX;
@@ -571,6 +571,8 @@ void cargarParametrosDesdeXML() {
     pugi::xml_parse_result result = doc.load_file("../parametros.xml");
 
     width = doc.child("scene").child("window").attribute("width").as_int();
+    mostrarRefleccionBYN = doc.child("scene").child("configuracion").attribute("mostrarReflexion").as_bool();
+    mostrarRefraccionBYN = doc.child("scene").child("configuracion").attribute("mostrarRefraccion").as_bool();
 
     esferaGrandeX = doc.child("scene").child("objects").child("esferaGrande").child("posicion").attribute("X").as_double();
     esferaGrandeY = doc.child("scene").child("objects").child("esferaGrande").child("posicion").attribute("Y").as_double();
